@@ -3,9 +3,9 @@ import random
 import math
 from tqdm import *
 import matplotlib.pyplot as plt
-import matplotlib.animation as animations
+# import matplotlib.animation as animations
 
-random.seed(1)
+# random.seed(1)
 
 class State:
     def __init__(self, curr_x:int, curr_y:int, goal_x:int, goal_y:int )->None:
@@ -34,47 +34,47 @@ class roadMap:
 
         #obstructions in the map, hardcoding the obstructions/walls
     
-        if (row >=0 and row <=3) and (col == 0 or col ==3 or col ==7) and action == 'East':
+        if (col >=0 and col <=3) and (row == 0 or row ==3 or row ==7) and action == 'East':
             return (row, col)
-        if (row >=6 and row <=9) and (col ==2 or col== 7) and action == 'East':
+        if (col >=6 and col <=9) and (row ==2 or row== 7) and action == 'East':
             return (row, col)
-        if (row >=4 and col <= 7) and (col==5) and action == 'East':
+        if (col >=4 and col <= 7) and (row==5) and action == 'East':
             return (row, col)
-        if (row >=0 and row <=3) and (col == 1 or col ==4 or col ==8) and action == 'West':
+        if (col >=0 and col <=3) and (row == 1 or row ==4 or row ==8) and action == 'West':
             return (row, col)
-        if (row >=6 and row <=9) and (col ==3 or col== 8) and action == 'West':
+        if (col >=6 and col <=9) and (row ==3 or row== 8) and action == 'West':
             return (row, col)
-        if (row >=4 and col <= 7) and (col==6) and action == 'West':
+        if (col >=4 and col <= 7) and (row==6) and action == 'West':
             return (row, col)
     
         if action == 'North':
-            if (row + 1 >= self.ROW_COUNT):
-                return (row, col)
-            return (row+1, col)
-        elif action == 'East':
             if (col + 1 >= self.COL_COUNT):
                 return (row, col)
             return (row, col+1)
-        elif action == 'South':
-            if (row - 1 < 0):
+        elif action == 'East':
+            if (row + 1 >= self.ROW_COUNT):
                 return (row, col)
-            return (row-1, col)
-        elif action == 'West':
+            return (row+1, col)
+        elif action == 'South':
             if (col - 1 < 0):
                 return (row, col)
             return (row, col-1)
+        elif action == 'West':
+            if (row - 1 < 0):
+                return (row, col)
+            return (row-1, col)
 
 
 
 class MDPModel:
-    def __init__(self, roadMap, alpha = 0.25, epsilon = 0.1, decaying = False, max_steps = 500, max_episodes = 5000, discount_fator = 0.99) -> None:
+    def __init__(self, roadMap, alpha = 0.25, epsilon = 0.1, max_steps = 500, max_episodes = 5000, discount_factor = 0.99, decaying = False) -> None:
         self.roadMap = roadMap
         self.epsilon = epsilon
         self.alpha = alpha
         self.decaying = decaying
         self.max_steps = max_steps
         self.max_episodes = max_episodes
-        self.discount_fator = discount_fator
+        self.discount_factor = discount_factor
         self.actions = ['North', 'East', 'South', 'West']
         self.states = dict()
         self.states_idx = dict()
@@ -82,9 +82,9 @@ class MDPModel:
         self.policy = dict()
         self.step_num = 1
         self.episode_num = 0
-        self.episodes = range(1000,5000,100)
-        self.discounter_rewards =  []
-        self.init_states()
+        self.episodes = range(1000,2000,100)
+        self.discounted_rewards =  []
+        self.states_value_initialisation()
         
 
 
@@ -106,14 +106,14 @@ class MDPModel:
 
     def get_reward(self, state:State, action, next_state:State)->float:
         assert action in self.actions, "invalid action" 
-        if next_state.curr_x == self.goal.curr_x and next_state.curr_y == self.goal.curr_y:
-            return +20
+        if next_state.curr_x == self.roadMap.goal[0] and next_state.curr_y == self.roadMap.goal[1]:
+            return +5
         elif next_state.curr_x == state.curr_x and next_state.curr_y == state.curr_y:
-            return -10
+            return -0.02
         elif self.get_distance(next_state) < self.get_distance(state):
-            return +4
+            return +0.8
         else:
-            return -2
+            return -0.5
 
 
     def get_next_state(self, state:State, action)->State:
@@ -161,20 +161,19 @@ class MDPModel:
 
 
     def run_episode(self):
+        
         self.episode_num +=1
+        
         curr_state = self.generate_random_state()
         curr_action = self.get_epsilonAction(curr_state)
-        iter =0
+        
+        iter=0
         while (iter < self.max_steps):
             action_taken = self.get_action(curr_action)
             next_state =  self.get_next_state(curr_state, action_taken)
             reward = self.get_reward(curr_state, curr_action, next_state)
-            if (self.sarsa == True):
-                next_action = self.get_epsilonAction(next_state)
-            else:
-                next_action = self.get_greedyAction(next_state)
-                
-            # now updating the Q value
+            next_action = self.get_epsilonAction(next_state)
+
             if (curr_state == self.states[(self.roadMap.goal[0], self.roadMap.goal[1], self.roadMap.goal[0], self.roadMap.goal[1])]):
                 self.Q_sa[(curr_state, curr_action)] = reward 
                 break
@@ -182,15 +181,44 @@ class MDPModel:
                 sample= reward + self.discount_factor*self.Q_sa[(next_state, next_action)]
                 self.Q_sa[(curr_state, curr_action)] = (1-self.alpha)*self.Q_sa[(curr_state, curr_action)] + self.alpha*sample
                 curr_state = next_state
-                if (self.sarsa == True):
-                    curr_action = next_action
-                else:
-                    curr_action = self.getEpsilonAction(curr_state)
+                curr_action = self.get_epsilonAction(curr_state)
+                
             self.step_num += 1
             iter+=1
 
 
+    def average_dis_reward(self, runs = 100):
+        sum = 0
+        for _ in range(runs):
+            sum += self.simulate(max_iters=500,  verbose=True)
+        return sum/runs
+
     
+    def getPolicy(self):
+        for states in self.states.values():
+            self.policy[(states.curr_x,states.curr_y,states.goal_x,states.goal_y)] = self.get_greedyAction(states)
+
+
+
+    def simulate(self, max_iters = 500, verbose =  False):
+        
+        curr_state = random.choice(list(self.states.values()))
+        discounted_reward = 0
+        i=0
+        while(i <max_iters):
+            action_suggested = self.policy[(curr_state.curr_x,curr_state.curr_y,curr_state.goal_x,curr_state.goal_y)]
+            action_taken = self.get_action(action_suggested)
+            next_state = self.get_next_state(curr_state, action_taken)
+            discounted_reward += self.get_reward(curr_state, action_taken, next_state)*(self.discount_factor**i)
+            # if (verbose ==  True):
+            #     print(f"{i+1}: {curr_state} -> {action_suggested} : {action_taken} -> {next_state}")
+            if next_state.curr_x == next_state.goal_x and next_state.curr_y == next_state.goal_y:
+                break
+            curr_state = next_state
+            i+=1
+        return discounted_reward
+
+
     def train_model(self, analyze_performance=False):
         for _ in tqdm(range(self.max_episodes)):
             self.run_episode()
@@ -200,7 +228,58 @@ class MDPModel:
                     self.discounted_rewards.append(self.average_dis_reward())
         self.getPolicy()
 
+    
+    def plot_dis_rewards(self):
+        # make episodes as x axis and discounted rewards as y axis
+        plt.plot(self.episodes, self.discounted_rewards)
+        plt.title(f"Figure : alpha:{self.alpha}, epsilon:{self.epsilon}")
+        plt.xlabel("Episodes")
+        plt.ylabel("Discounted Rewards")
+        plt.savefig(f"outputs/alpha:{self.alpha}_epsilon:{self.epsilon}.png")
+        plt.show()
+        plt.close()
 
-    def getPolicy(self):
-        for states in self.states.values():
-            self.policy[states] = self.get_greedyAction(states)
+
+
+    def simulate_policy(self,init,dest):
+        # nxt = State(self.roadMap.person_init[0],self.roadMap.person_init[1],self.roadMap.goal[0],self.roadMap.goal[1])
+        # dest = State(self.roadMap.goal[0],self.roadMap.goal[1],self.roadMap.goal[0],self.roadMap.goal[1])
+        nxt = State(init[0],init[1],dest[0],dest[1])
+        final = State(dest[0],dest[1],dest[0],dest[1])
+        print(nxt,final)
+        counter = 0
+        while True:
+            
+            if (nxt.curr_x==nxt.goal_x and nxt.curr_y == nxt.goal_y) or counter==50:
+                # print("in")
+                break
+            
+            # print(nxt)
+            suggested_act = self.policy[(nxt.curr_x, nxt.curr_y,nxt.goal_x,nxt.goal_y)] 
+            taken_act = self.get_action(suggested_act)
+            next_state = self.get_next_state(nxt,taken_act)
+            print(counter,nxt,taken_act,next_state)
+            nxt = next_state
+            counter+=1
+
+
+def analyze_discounted_rewards(roadMap, decaying, alpha = 0.25, epsilon = 0.1, discount_factor = 0.99, max_episodes = 5000):
+    
+    model = MDPModel(roadMap, decaying=decaying, alpha= alpha, epsilon=epsilon, discount_factor=discount_factor, max_episodes=max_episodes)
+    np.random.seed(0)
+    model.train_model(analyze_performance=True)
+    # for k,v in model.policy.items():
+    #     print(k,v)
+    model.simulate_policy(model.roadMap.person_init,model.roadMap.goal)
+    # model.plot_dis_rewards()
+    print(f"Final discount: {model.discounted_rewards[-1]}")
+
+
+
+
+person_init = (4,0)
+destination = (4,4)
+
+roadMap = roadMap(person_init, destination)
+
+analyze_discounted_rewards(roadMap, True, max_episodes=2000)
