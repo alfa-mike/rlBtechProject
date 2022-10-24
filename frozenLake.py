@@ -131,11 +131,14 @@ class MDPModel:
 
 
     def states_value_initialisation(self)->None:
-        for row in range(self.frozenLake.ROW_COUNT):
-            for col in range(self.frozenLake.COL_COUNT):
-                for goal_row in range(self.frozenLake.ROW_COUNT):
-                    for goal_col in range(self.frozenLake.COL_COUNT):
-                        self.states[(row, col, goal_row, goal_col)] = State(row, col, goal_row, goal_col)
+        for x in range(self.frozenLake.COL_COUNT):
+            for y in range(self.frozenLake.ROW_COUNT):
+#                 for goal_row in range(self.frozenLake.ROW_COUNT):
+#                     for goal_col in range(self.frozenLake.COL_COUNT):
+#                         self.states[(row, col, goal_row, goal_col)] = State(row, col, goal_row, goal_col)
+                  goal_x = self.frozenLake.goal[0]
+                  goal_y = self.frozenLake.goal[1]
+                  self.states[(x, y, goal_x, goal_y )] = State(x, y, goal_x, goal_y)
         for i,state in enumerate(self.states.values()):
             self.states_idx[state] = i
             for action in self.actions:
