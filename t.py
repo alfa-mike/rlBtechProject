@@ -1,65 +1,83 @@
-
-# import numpy as np
-# import matplotlib.pyplot as plt
-# import random
-# from sklearn.linear_model import LinearRegression
-
-
-# # from tqdm import *
-# # from time import sleep
- 
- 
-# # bar = tqdm(range(0,100), colour = "green", ncols=100, desc="Process: ", unit="Byte")
-# # for i in bar:
-# #     sleep(.01)
-# # print("Completed!")
+from filecmp import cmp
+import matplotlib.pyplot as plt
+import matplotlib.animation as ani
+import numpy as np
 
 
-# # x_val = []
-# # y_val = []
 
-# # reg = LinearRegression()
+# maze = [[2 for _ in range(10)] for _ in range(10)]
 
-# # for i in range(1000):
-# #     plt.clf()
-# #     x_val.append(random.randint(0,100))
-# #     y_val.append(random.randint(0,100))
+# plt.rcParams["figure.figsize"] = [7.00, 7.00]
+# plt.rcParams["figure.autolayout"] = True
 
-# #     x = np.array(x_val)
-# #     x = x.reshape(-1,1)
+# fig, ax = plt.subplots()
 
-# #     y = np.array(y_val)
-# #     y = y.reshape(-1,1)
+# def update(i):
+#     global maze
+#     # im_normed = np.random.rand(10, 10)
+#     if i==0:
+#         maze[i][i]=4
+#     else:
+#         maze[i][i]=4
+#         maze[i-1][i-1]=2
+#     ax.imshow(maze,cmap="Greens")
+#     # ax.set_axis_off()
+#     ax.maze(True)
+
+# anim = ani.FuncAnimation(fig, update, frames=10, interval=1000)
+
+# plt.show()
+maze = [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],  
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1] 
+        ]
+
+array = [(4,0),(4,1),(4,2),(4,3),(5,3),(6,3),(6,4)]
+
+plt.rcParams["figure.figsize"] = [7.00, 10.00]
+plt.rcParams["figure.autolayout"] = True
+# plt.grid()
+
+fig, ax = plt.subplots()
+# ax.set(aspect = 1,
+#        xlim =(0, 10),
+#        ylim =(0, 10))
+
+
+
+def update(t):
+    global maze
+    global array
+    if t==len(array):
+        return 
+    if t==0:
+        idx_x,idx_y = 9-array[t][1],array[t][0]
         
-# #     if i%10==0:
-# #         reg.fit(x,y)
-# #         plt.xlim(0,100)
-# #         plt.ylim(0,100)
-# #         plt.scatter(x_val,y_val,color="red")
-# #         plt.plot((list(range(100))),reg.predict(np.array([x for x in range(100)]).reshape(-1,1)))
-# #         plt.pause(0.001)
+        maze[idx_x][idx_y]=10
+        maze[9-array[-1][1]][array[-1][0]] = 20
+    
+    else:
+        prev_idx_x,prev_idx_y = 9-array[t-1][1],array[t-1][0]
+        idx_x,idx_y = 9-array[t][1],array[t][0]
 
-# # plt.show()
+        maze[prev_idx_x][prev_idx_y]=1
+        maze[idx_x][idx_y]=10
+        maze[9-array[-1][1]][array[-1][0]] = 20
 
-# def lengthOfLastWord(A):
-#     A = A.rstrip()
-#     n = len(A)
-#     j=n-1
-#     while j>-1:
-#         if A[j]==" ":
-#             break
-#         j-=1
-#     if j==n-1:
-#         return 0
-#     return (n-1-j)
-
-# print(lengthOfLastWord("   Hello World  "))
+    ax.imshow(maze,cmap="Greens")
+    # ax.set_axis_off()
 
 
-def fn(a,b,n):
-    r = round(b/a,3)
-    # first = round(a/r)
-    ans = b*(r**(n-3))
-    return round(ans,3)
+anim = ani.FuncAnimation(fig, update, frames=len(array), interval=1000)
+# ax.imshow(maze)
 
-print(fn(1,2,4))
+plt.show()
+

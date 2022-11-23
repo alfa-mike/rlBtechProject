@@ -3,7 +3,7 @@ import random
 import math
 from tqdm import *
 import matplotlib.pyplot as plt
-# import matplotlib.animation as animations
+import matplotlib.animation as ani
 
 # random.seed(1)
 
@@ -82,8 +82,9 @@ class MDPModel:
         self.policy = dict()
         self.step_num = 1
         self.episode_num = 0
-        self.episodes = range(1000,2000,100)
+        self.episodes = range(100,1000,100)
         self.discounted_rewards =  []
+        self.final_policy_arr = []
         self.states_value_initialisation()
         
 
@@ -242,25 +243,69 @@ class MDPModel:
 
 
     def simulate_policy(self,init,dest):
-        # nxt = State(self.roadMap.person_init[0],self.roadMap.person_init[1],self.roadMap.goal[0],self.roadMap.goal[1])
-        # dest = State(self.roadMap.goal[0],self.roadMap.goal[1],self.roadMap.goal[0],self.roadMap.goal[1])
         nxt = State(init[0],init[1],dest[0],dest[1])
-        final = State(dest[0],dest[1],dest[0],dest[1])
-        print(nxt,final)
+        # self.final_policy_arr.append((nxt.curr_x,nxt.curr_y))
         counter = 0
         while True:
-            
+            self.final_policy_arr.append((nxt.curr_x,nxt.curr_y))
             if (nxt.curr_x==nxt.goal_x and nxt.curr_y == nxt.goal_y) or counter==50:
-                # print("in")
+                # self.final_policy_arr.append((nxt.curr_x,nxt.curr_y))
                 break
-            
-            # print(nxt)
+
             suggested_act = self.policy[(nxt.curr_x, nxt.curr_y,nxt.goal_x,nxt.goal_y)] 
             taken_act = self.get_action(suggested_act)
             next_state = self.get_next_state(nxt,taken_act)
-            print(counter,nxt,taken_act,next_state)
+            print(f"step={counter},{nxt}+{taken_act} --> {next_state}")
             nxt = next_state
+            # self.final_policy_arr.append((nxt.curr_x,nxt.curr_y))
             counter+=1
+
+    def gridAnimate(self,array):
+        
+        maze = [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],  
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1] 
+        ]
+
+        # array = [(4,0),(4,1),(4,2),(4,3),(5,3),(6,3),(6,4)]
+
+        plt.rcParams["figure.figsize"] = [7.00, 10.00]
+        plt.rcParams["figure.autolayout"] = True
+
+        fig, ax = plt.subplots()
+
+        def update(t):
+            nonlocal maze
+            nonlocal array
+            if t==len(array):
+                return 
+            if t==0:
+                idx_x,idx_y = 9-array[t][1],array[t][0]
+                
+                maze[idx_x][idx_y]=10
+                maze[9-array[-1][1]][array[-1][0]] = 20
+            
+            else:
+                prev_idx_x,prev_idx_y = 9-array[t-1][1],array[t-1][0]
+                idx_x,idx_y = 9-array[t][1],array[t][0]
+
+                maze[prev_idx_x][prev_idx_y]=1
+                maze[idx_x][idx_y]=10
+                maze[9-array[-1][1]][array[-1][0]] = 20
+
+            ax.imshow(maze,cmap="Greens")
+
+        anim = ani.FuncAnimation(fig, update, frames=len(array), interval=1000)
+        plt.show()
+
 
 
 def analyze_discounted_rewards(roadMap, decaying, alpha = 0.25, epsilon = 0.1, discount_factor = 0.99, max_episodes = 5000):
@@ -268,10 +313,8 @@ def analyze_discounted_rewards(roadMap, decaying, alpha = 0.25, epsilon = 0.1, d
     model = MDPModel(roadMap, decaying=decaying, alpha= alpha, epsilon=epsilon, discount_factor=discount_factor, max_episodes=max_episodes)
     np.random.seed(0)
     model.train_model(analyze_performance=True)
-    # for k,v in model.policy.items():
-    #     print(k,v)
     model.simulate_policy(model.roadMap.person_init,model.roadMap.goal)
-    # model.plot_dis_rewards()
+    model.gridAnimate(model.final_policy_arr)
     print(f"Final discount: {model.discounted_rewards[-1]}")
 
 
@@ -282,4 +325,9 @@ destination = (4,4)
 
 roadMap = roadMap(person_init, destination)
 
-analyze_discounted_rewards(roadMap, True, max_episodes=2000)
+analyze_discounted_rewards(roadMap, True, max_episodes=1000)
+
+
+# general of 
+# autism and IEEE transaction 
+# general of autism
