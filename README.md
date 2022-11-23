@@ -1,2 +1,2 @@
 # rlBtechProject
-E-learning Model based on RL for autism affected children
+Extension of BDI model to plan in an unknown environment.
