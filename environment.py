@@ -8,6 +8,7 @@ class Environment:
         self.goal = goal
         self.holes = {(1,1), (1,2), (2,2), (2,6), (5,5), (6,8)}
 
+
     def next_cell(self, x,y,action):
         assert x >= 0 and x < self.COL_COUNT, "x out of range"
         assert y >= 0 and y < self.ROW_COUNT, "y out of range"
